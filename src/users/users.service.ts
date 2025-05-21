@@ -4,8 +4,10 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { CreateUserDTO } from './dto/create-user.dto';
+import { UserResponseDTO } from './dto/user-response.dto';
 import { User } from './entity/user.entity';
 @Injectable()
 export class UsersService {
@@ -19,7 +21,11 @@ export class UsersService {
         ...data,
         // password: bcrypt.hashSync(data.password, 10), // Hash the password before saving
       });
-      return await this.userRepository.save(user);
+      const savedUser = await this.userRepository.save(user);
+
+      return plainToInstance(UserResponseDTO, savedUser, {
+        excludeExtraneousValues: true,
+      });
     } catch (error) {
       if (error.code === '23505') {
         // PostgreSQL duplicate key error code
